@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import { Entry, EntryFunc, ExternalsElement, Options } from 'webpack';
 
 type ProjectType = 'app';

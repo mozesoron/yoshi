@@ -1,30 +1,32 @@
-const fs = require('fs');
-const path = require('path');
-const mkdirp = require('mkdirp');
-const chokidar = require('chokidar');
-const chalk = require('chalk');
-const psTree = require('ps-tree');
-const childProcess = require('child_process');
-const detect = require('detect-port');
-const project = require('yoshi-config');
-const queries = require('./queries');
-const { POM_FILE, MONOREPO_ROOT } = require('yoshi-config/paths');
-const xmldoc = require('xmldoc');
-const { staticsDomain } = require('./constants');
+import fs from 'fs';
+import path from 'path';
+import childProcess, { ChildProcess } from 'child_process';
+import mkdirp from 'mkdirp';
+import chokidar from 'chokidar';
+import chalk from 'chalk';
+import psTree from 'ps-tree';
+import detect from 'detect-port';
+import config, { paths } from 'yoshi-config';
+import xmldoc from 'xmldoc';
+// eslint-disable-next-line import/no-unresolved
+import { Stats } from 'webpack';
+import { inTeamCity } from './queries';
+import { staticsDomain } from './constants';
 
-function logIfAny(log) {
+export function logIfAny(log: any) {
   if (log) {
     console.log(log);
   }
 }
 
-module.exports.unprocessedModules = p => {
-  const allSourcesButExternalModules = function(filePath) {
+export const unprocessedModules = (p: string) => {
+  const allSourcesButExternalModules = (filePath: string) => {
     filePath = path.normalize(filePath);
 
-    if (project.experimentalMonorepoSubProcess) {
+    if (config.experimentalMonorepoSubProcess) {
       return (
-        filePath.startsWith(MONOREPO_ROOT) && !filePath.includes('node_modules')
+        filePath.startsWith(paths.MONOREPO_ROOT as string) &&
+        !filePath.includes('node_modules')
       );
     }
 
@@ -34,7 +36,7 @@ module.exports.unprocessedModules = p => {
   };
 
   const externalUnprocessedModules = ['wix-style-react/src'].concat(
-    project.externalUnprocessedModules,
+    config.externalUnprocessedModules,
   );
 
   const externalRegexList = externalUnprocessedModules.map(
@@ -47,7 +49,7 @@ module.exports.unprocessedModules = p => {
   );
 };
 
-module.exports.createBabelConfig = (presetOptions = {}) => {
+export const createBabelConfig = (presetOptions = {}) => {
   const pathsToResolve = [__filename];
   try {
     pathsToResolve.push(require.resolve('yoshi'));
@@ -66,14 +68,15 @@ module.exports.createBabelConfig = (presetOptions = {}) => {
   };
 };
 
-module.exports.logIfAny = logIfAny;
-
-module.exports.suffix = suffix => str => {
-  const hasSuffix = str.lastIndexOf(suffix) === str.length - suffix.length;
+export const suffix = (ending: string) => (str: string) => {
+  const hasSuffix = str.lastIndexOf(ending) === str.length - suffix.length;
   return hasSuffix ? str : str + suffix;
 };
 
-module.exports.reportWebpackStats = (buildType, stats) => {
+export const reportWebpackStats = (
+  buildType: 'development' | 'production',
+  stats: Stats,
+) => {
   console.log(chalk.magenta(`Webpack summary for ${buildType} build:`));
   logIfAny(
     stats.toString({
@@ -92,14 +95,21 @@ module.exports.reportWebpackStats = (buildType, stats) => {
   );
 };
 
-module.exports.writeFile = (targetFileName, data) => {
+export const writeFile = (targetFileName: string, data: string) => {
   mkdirp.sync(path.dirname(targetFileName));
   fs.writeFileSync(path.resolve(targetFileName), data);
 };
 
-module.exports.watch = (
-  { pattern, cwd = process.cwd(), ignoreInitial = true, ...options },
-  callback,
+type callback = (path: string) => void;
+
+export const watch = (
+  {
+    pattern,
+    cwd = process.cwd(),
+    ignoreInitial = true,
+    ...options
+  }: { pattern: string | Array<string>; cwd: string; ignoreInitial?: boolean },
+  callback: callback,
 ) => {
   const watcher = chokidar
     .watch(pattern, { cwd, ignoreInitial, ...options })
@@ -108,8 +118,8 @@ module.exports.watch = (
   return watcher;
 };
 
-module.exports.getMochaReporter = () => {
-  if (queries.inTeamCity()) {
+export const getMochaReporter = () => {
+  if (inTeamCity()) {
     return 'mocha-teamcity-reporter';
   }
 
@@ -120,7 +130,7 @@ module.exports.getMochaReporter = () => {
   return 'progress';
 };
 
-module.exports.getListOfEntries = entry => {
+export const getListOfEntries = (entry: any) => {
   if (typeof entry === 'string') {
     return [path.resolve('src', entry)];
   } else if (typeof entry === 'object') {
@@ -132,39 +142,45 @@ module.exports.getListOfEntries = entry => {
   return [];
 };
 
-module.exports.shouldTransformHMRRuntime = () => {
-  return project.hmr === 'auto' && project.isReactProject;
+export const shouldTransformHMRRuntime = () => {
+  return config.hmr === 'auto' && config.isReactProject;
 };
 
-module.exports.getProcessIdOnPort = port => {
+export const getProcessIdOnPort = (port: number) => {
   return childProcess
     .execSync(`lsof -i:${port} -P -t -sTCP:LISTEN`, { encoding: 'utf-8' })
+    .toString()
     .split('\n')[0]
     .trim();
 };
 
-function getDirectoryOfProcessById(pid) {
+function getDirectoryOfProcessById(pid: number) {
   return childProcess
     .execSync(`lsof -p ${pid} | grep cwd | awk '{print $9}'`, {
       encoding: 'utf-8',
     })
+    .toString()
     .trim();
 }
 
-const getCommandArgByPid = (pid, argIndex = 0) => {
+const getCommandArgByPid = (pid: number, argIndex = 0) => {
   return childProcess
     .execSync(`ps -p ${pid} | awk '{print $${4 + argIndex}}'`, {
       encoding: 'utf-8',
     })
+    .toString()
     .trim();
 };
 
-module.exports.processIsJest = pid => {
+export const processIsJest = (pid: number) => {
   const commandArg = getCommandArgByPid(pid, 1);
   return commandArg.split('/').pop() === 'jest';
 };
 
-module.exports.getProcessOnPort = async (port, shouldCheckTestResult) => {
+export const getProcessOnPort = async (
+  port: number,
+  shouldCheckTestResult?: boolean,
+) => {
   if (shouldCheckTestResult) {
     const portTestResult = await detect(port);
 
@@ -173,8 +189,8 @@ module.exports.getProcessOnPort = async (port, shouldCheckTestResult) => {
     }
   }
   try {
-    const pid = module.exports.getProcessIdOnPort(port);
-    const cwd = getDirectoryOfProcessById(pid);
+    const pid = getProcessIdOnPort(port);
+    const cwd = getDirectoryOfProcessById(parseInt(pid, 10));
 
     return {
       pid,
@@ -185,17 +201,16 @@ module.exports.getProcessOnPort = async (port, shouldCheckTestResult) => {
   }
 };
 
-module.exports.toIdentifier = str => {
+export const toIdentifier = (str: string) => {
   const IDENTIFIER_NAME_REPLACE_REGEX = /^([^a-zA-Z$_])/;
   const IDENTIFIER_ALPHA_NUMERIC_NAME_REPLACE_REGEX = /[^a-zA-Z0-9$]+/g;
 
-  if (typeof str !== 'string') return '';
   return str
     .replace(IDENTIFIER_NAME_REPLACE_REGEX, '_$1')
     .replace(IDENTIFIER_ALPHA_NUMERIC_NAME_REPLACE_REGEX, '_');
 };
 
-module.exports.tryRequire = name => {
+export const tryRequire = (name: string) => {
   let absolutePath;
 
   try {
@@ -211,10 +226,10 @@ module.exports.tryRequire = name => {
 /**
  * Gets the artifact id of the project at the current working dir
  */
-const getProjectArtifactId = () => {
-  if (fs.existsSync(POM_FILE)) {
+export const getProjectArtifactId = () => {
+  if (fs.existsSync(paths.POM_FILE)) {
     const artifactId = new xmldoc.XmlDocument(
-      fs.readFileSync(POM_FILE),
+      fs.readFileSync(paths.POM_FILE, 'utf-8'),
     ).valueWithPath('artifactId');
 
     return artifactId;
@@ -223,27 +238,21 @@ const getProjectArtifactId = () => {
   return '';
 };
 
-module.exports.getProjectArtifactId = getProjectArtifactId;
-
-const getProjectArtifactVersion = () => {
-  return process.env.ARTIFACT_VERSION
+export const getProjectArtifactVersion = () => {
+  return (process.env.ARTIFACT_VERSION
     ? // Dev CI
       process.env.ARTIFACT_VERSION.replace('-SNAPSHOT', '')
     : // PR CI won't have a version, only BUILD_NUMBER and BUILD_VCS_NUMBER
-      process.env.BUILD_VCS_NUMBER;
+      process.env.BUILD_VCS_NUMBER) as string;
 };
 
-module.exports.getProjectArtifactVersion = getProjectArtifactVersion;
-
-/**
- * Gets the CDN base path for the project at the current working dir
- */
-module.exports.getProjectCDNBasePath = () => {
+// Gets the CDN base path for the project at the current working dir
+export const getProjectCDNBasePath = () => {
   const artifactName = getProjectArtifactId();
 
   let artifactPath = '';
 
-  if (project.experimentalBuildHtml) {
+  if (config.experimentalBuildHtml) {
     // Not to be confused with Yoshi's `dist` directory.
     //
     // Static assets are deployed to two locations on the CDN:
@@ -261,7 +270,7 @@ module.exports.getProjectCDNBasePath = () => {
   return `${staticsDomain}/${artifactName}/${artifactPath}/`;
 };
 
-module.exports.killSpawnProcessAndHisChildren = child => {
+export const killSpawnProcessAndHisChildren = (child: ChildProcess) => {
   return new Promise(resolve => {
     if (!child) {
       return resolve();
@@ -270,13 +279,13 @@ module.exports.killSpawnProcessAndHisChildren = child => {
     const pid = child.pid;
 
     psTree(pid, (err, children) => {
-      [pid].concat(children.map(p => p.PID)).forEach(tpid => {
-        try {
-          process.kill(tpid, 'SIGKILL');
-        } catch (e) {}
-      });
-
-      child = null;
+      [pid]
+        .concat(children.map(p => parseInt(p.PID, 10)))
+        .forEach((tpid: number) => {
+          try {
+            process.kill(tpid, 'SIGKILL');
+          } catch (e) {}
+        });
       resolve();
     });
   });

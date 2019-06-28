@@ -1,7 +1,17 @@
-const fs = require('fs');
-const { NODE_PLATFORM_DEFAULT_CONFIGS_DIR } = require('yoshi-config/paths');
+import fs from 'fs';
+import { paths } from 'yoshi-config';
 
-const getEnvVars = ({ port, appConfDir, appLogDir, appPersistentDir }) => {
+export const getEnvVars = ({
+  port,
+  appConfDir,
+  appLogDir,
+  appPersistentDir,
+}: {
+  port: number;
+  appConfDir: string;
+  appLogDir: string;
+  appPersistentDir: string;
+}) => {
   const PORT = Number(port) || 3000;
   const GRPC_PORT = PORT + 1;
   const MANAGEMENT_PORT = PORT + 4;
@@ -24,11 +34,11 @@ const getEnvVars = ({ port, appConfDir, appLogDir, appPersistentDir }) => {
   };
 };
 
-const getDevelopmentEnvVars = ({ port }) => {
+export const getDevelopmentEnvVars = ({ port }: { port: number }) => {
   // Check if the project has the default directory for loading node platform
   // configs. If it exists, the project is not using the `index-dev.js` pattern and we
   // keep the defaults. Otherwise, we inject our own defaults to keep boilerplate to a minimum.
-  if (fs.existsSync(NODE_PLATFORM_DEFAULT_CONFIGS_DIR)) {
+  if (fs.existsSync(paths.NODE_PLATFORM_DEFAULT_CONFIGS_DIR)) {
     return {};
   }
 
@@ -41,5 +51,3 @@ const getDevelopmentEnvVars = ({ port }) => {
 
   return envVars;
 };
-
-module.exports = { getEnvVars, getDevelopmentEnvVars };
