@@ -223,14 +223,13 @@ export const tryRequire = (name: string) => {
   return require(absolutePath);
 };
 
-/**
- * Gets the artifact id of the project at the current working dir
- */
+// Gets the artifact id of the project at the current working dir
 export const getProjectArtifactId = () => {
   if (fs.existsSync(paths.POM_FILE)) {
-    const artifactId = new xmldoc.XmlDocument(
-      fs.readFileSync(paths.POM_FILE, 'utf-8'),
-    ).valueWithPath('artifactId');
+    const content = fs.readFileSync(paths.POM_FILE, 'utf-8');
+    const artifactId = new xmldoc.XmlDocument(content).valueWithPath(
+      'artifactId',
+    );
 
     return artifactId;
   }

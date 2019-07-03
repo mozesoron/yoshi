@@ -2,7 +2,6 @@ import path from 'path';
 import fs from 'fs';
 import globby from 'globby';
 import config, { globs, paths } from 'yoshi-config';
-import { tryRequire } from './utils';
 import { defaultEntry } from './constants';
 
 export const exists = (
@@ -47,8 +46,7 @@ export const isTypescriptProject = () =>
   fs.existsSync(path.resolve('tsconfig.json'));
 
 export const shouldExportModule = () => {
-  const pkg = tryRequire(path.resolve('package.json'));
-  return !!(pkg && pkg.module);
+  return !!config.pkgJson.module;
 };
 
 export const shouldRunLess = () => {

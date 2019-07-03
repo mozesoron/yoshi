@@ -19,8 +19,8 @@ export default async function startRewriteForwardProxy({
   const regularProxy = createProxyServer({ ignorePath: true, secure: false });
 
   const options = {
-    key: fs.readFileSync(path.join(__dirname, './server.key')),
-    cert: fs.readFileSync(path.join(__dirname, './server.cert')),
+    key: fs.readFileSync(path.join(__dirname, './certificates/server.key')),
+    cert: fs.readFileSync(path.join(__dirname, './certificates/server.cert')),
   };
 
   function proxyRequest(protocol: 'http' | 'https') {
