@@ -1,7 +1,9 @@
 import path from 'path';
 import fs from 'fs';
 import globby from 'globby';
-import config, { globs, paths } from 'yoshi-config';
+import config from 'yoshi-config';
+import * as globs from 'yoshi-config/globs';
+import { POM_FILE } from 'yoshi-config/paths';
 import { defaultEntry } from './constants';
 
 export const exists = (
@@ -69,7 +71,7 @@ export const shouldDeployToCDN = () => {
   return (
     inTeamCity() &&
     (process.env.ARTIFACT_VERSION || process.env.BUILD_VCS_NUMBER) &&
-    fs.existsSync(paths.POM_FILE)
+    fs.existsSync(POM_FILE)
   );
 };
 

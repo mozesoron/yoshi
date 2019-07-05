@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { paths } from 'yoshi-config';
+import { NODE_PLATFORM_DEFAULT_CONFIGS_DIR } from 'yoshi-config/paths';
 
 export const getEnvVars = ({
   port,
@@ -38,7 +38,7 @@ export const getDevelopmentEnvVars = ({ port }: { port: number }) => {
   // Check if the project has the default directory for loading node platform
   // configs. If it exists, the project is not using the `index-dev.js` pattern and we
   // keep the defaults. Otherwise, we inject our own defaults to keep boilerplate to a minimum.
-  if (fs.existsSync(paths.NODE_PLATFORM_DEFAULT_CONFIGS_DIR)) {
+  if (fs.existsSync(NODE_PLATFORM_DEFAULT_CONFIGS_DIR)) {
     return {};
   }
 

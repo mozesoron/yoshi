@@ -1,3 +1,1 @@
-import config, { globs, paths } from './build/index.d';
-
-export { globs, paths, config as default };
+export { default } from './build/index.d';
