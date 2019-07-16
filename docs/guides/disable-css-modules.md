@@ -33,3 +33,8 @@ In case you are importing a regular 'css' file, just omit file extension:
 ```scss
 @import "3rd-party-module/x/style";
 ```
+## Importing css while maintaining the global variable name.
+
+There are cases where you want to load 3rd-party scss file and you want to prevent css module hash process.
+
+For that you need to create a "global.scss" file and then @import the external scss file.
